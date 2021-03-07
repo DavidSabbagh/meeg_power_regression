@@ -125,15 +125,15 @@ model_labels_shape <- model_labels[
 model_names_shape <- model_names[
   model_names %in% c("log-diag", "riemann", "spoc")]
 
-shape_labels <- setNames(
+shape_labels <- rev(setNames(
   model_labels_shape,
   model_names_shape
-)
+))
 
-shape_values <- setNames(
+shape_values <- rev(setNames(
   c(0, 1, 2),
   model_names_shape
-)
+))
 
 annot_data <- data.frame(
   x = c(3, 5),

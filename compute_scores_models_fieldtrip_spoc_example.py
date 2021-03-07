@@ -32,12 +32,15 @@ n_jobs = 20
 ##############################################################################
 # Define parameters
 fname = data_path() + '/SubjectCMC.ds'
+# may need mkdir ~/mne_data
+# import locale; locale.setlocale(locale.LC_ALL, "en_US.utf8")
 
 raw = mne.io.read_raw_ctf(fname)
-raw.crop(50., 250.).load_data()  # crop for memory purposes
+raw.crop(450., 650.).load_data()  # crop for memory purposes
+# (0-400s=lft=> crop 50-250, 400-800=rgt => crop 450-650)
 
 # Filter muscular activity to only keep high frequencies
-emg = raw.copy().pick_channels(['EMGlft'])
+emg = raw.copy().pick_channels(['EMGrgt'])
 emg.filter(20., None, fir_design='firwin')
 
 # Filter MEG data to focus on beta band, no ref channels (!)
@@ -45,7 +48,7 @@ raw.pick_types(meg=True, ref_meg=False, eeg=False, eog=False)
 raw.filter(15., 30., fir_design='firwin')
 
 # Build epochs as sliding windows over the continuous raw file
-events = mne.make_fixed_length_events(raw, id=1, duration=.250)
+events = mne.make_fixed_length_events(raw, id=1, duration=1.5)
 
 # Epoch length is 1.5 second
 meg_epochs = Epochs(raw, events, tmin=0., tmax=1.500, baseline=None,
@@ -171,3 +174,23 @@ for scoring in ("r2", "neg_mean_absolute_error"):
     np.save(op.join(cfg.path_outputs,
                     f'all_scores_models_fieldtrip_spoc_{score_name}.npy'),
             all_scores)
+
+
+#  # to plot corresponding SPoC patterns
+#  spoc = ProjSPoCSpace(n_compo=4, scale=scale, reg=0, shrink=0.5)
+#  spoc.fit(X,y)
+#  fig = spoc.plot_patterns(meg_epochs.info, fband=0,
+#                           name_format='SPoC%01d', scalings=dict(mag=1))
+#  fig.savefig('/home/dsabbagh/spoc.png', dpi=300)
+#
+#  # to check it has similar perf
+#  scores=list()
+#  for n_compo in range(151):
+#      pipelines['spoc'].steps[0][1].n_compo=n_compo
+#      estimator=pipelines['spoc']
+#      scoring='r2'
+#      cv = GroupShuffleSplit(n_splits=n_splits, train_size=.8, test_size=.2)
+#      score = cross_val_score(X=X, y=y, estimator=estimator, cv=cv,
+#              n_jobs=min(n_splits, n_jobs), groups=groups, scoring=scoring)
+#      print(score.mean())
+#      scores.append(score.mean())
